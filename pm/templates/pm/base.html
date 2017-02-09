@@ -1,0 +1,42 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Welcome{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'pm/bootstrap/css/bootstrap.min.css' %}">
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" id="navbar-main">
+  <div class="container">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-main">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="{% url "pm:index" %}">Orders</a>
+    </div>
+    <div class="collapse navbar-collapse">
+      <ul class="nav navbar-nav navbar-right">
+          {% if user.is_authenticated %}
+                  <li><a href="{% url 'pm:logout' %}">Hi, {{ user.username }}! [logout]</a></li>
+          {% else %}
+              <li><a href="{% url 'pm:login' %}">login</a></li>
+          {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+<br>
+<div class="container">
+  <hr>
+    <br>
+    {% block content %}
+    {% endblock %}
+  <hr>
+</div>
+</body>
+</html>

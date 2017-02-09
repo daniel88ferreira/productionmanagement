@@ -1,0 +1,27 @@
+{% extends 'pm/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}OrdersHome{% endblock %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <br>
+        <div class="list-group">
+            <a href="#" class="list-group-item">
+                <h4 class="list-group-item-heading">Ordens de Producao</h4>
+                <p class="list-group-item-text">Gerir ordens de Producao</p>
+            </a>
+            <a href="{% url 'pm:products' %}" class="list-group-item">
+                <h4 class="list-group-item-heading">Produtos</h4>
+                <p class="list-group-item-text">Criar e alterar produtos</p>
+            </a>
+            <a href="#" class="list-group-item">
+                <h4 class="list-group-item-heading">Stocks</h4>
+                <p class="list-group-item-text">Gerir Stocks</p>
+            </a>
+        </div>
+    {% else %}
+        <h2 class="h3">Please <a href="{% url 'pm:login' %}">login</a></h2>
+    {% endif %}
+{% endblock %}

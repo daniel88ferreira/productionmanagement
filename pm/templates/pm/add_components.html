@@ -1,0 +1,14 @@
+{% extends 'pm/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}Adicionar Components ao Produto{% endblock %}
+
+{% block content %}
+    <h2 class="h3">Adicionar Componentes ao Produto "{{ productid }}"</h2>
+    <form action="{% url 'pm:add_components' productid %}" method="post">
+        {% csrf_token %}
+        {{ form|crispy}}
+        <input type="submit" value="Adicionar" />
+    </form>
+{% endblock %}
