@@ -9,6 +9,7 @@
     <form action="{% url 'pm:add_product' %}" method="post">
         {% csrf_token %}
         {{ form|crispy}}
-        <input type="submit" value="Adicionar" />
+        <input class="btn btn-primary" type="submit" value="Adicionar" />
+        <input class="btn btn-default" type="submit" name="cancel" value="Cancelar" formnovalidate />
     </form>
 {% endblock %}

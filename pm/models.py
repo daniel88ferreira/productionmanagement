@@ -13,13 +13,17 @@ class Product(models.Model):
     stock = models.IntegerField(default=0)
 
     def __str__(self):
-        return self.name + ' ' + self.color + ' ' + self.size
+        return self.ref_code +': '+ self.name + ', ' + self.color + ', ' + self.size
+
+    def get_quantity_list(self):
+        return Quantity.objects.filter(product=self)
 
 
 class Quantity(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='quantity_product')
     component = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='quantity_component')
     quantity = models.IntegerField(default=1)
+
 
 
 class ProductForm(ModelForm):
