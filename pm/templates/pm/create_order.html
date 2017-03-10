@@ -1,0 +1,15 @@
+{% extends 'pm/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}Criar Nova Ordem de Produção{% endblock %}
+
+{% block content %}
+    <h2 class="h3">Criar Nova Ordem de Produção</h2>
+    <form action="{% url 'pm:create_order' %}" method="post">
+        {% csrf_token %}
+        {{ form|crispy}}
+        <input class="btn btn-primary" type="submit" value="Adicionar" />
+        <input class="btn btn-default" type="submit" name="cancel" value="Cancelar" formnovalidate />
+    </form>
+{% endblock %}

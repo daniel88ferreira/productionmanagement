@@ -6,13 +6,59 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse
 
 from .models import *
+from .utils import *
+
 
 def index(request):
     return render(request, 'pm/index.html')
 
 @login_required
 def orders(request):
-    return HttpResponse("Here goes Production orders table.")
+    all_orders_list = Order.objects.filter(type=Order.TYPE_BS).order_by('-date')
+    context = {
+        'all_orders_list' : all_orders_list,
+    }
+    return render(request, 'pm/orders.html', context)
+
+
+@login_required
+def create_order(request):
+    if request.method == 'POST':
+        if "cancel" in request.POST:
+            return HttpResponseRedirect(reverse('pm:orders'))
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            form.save()
+            CounterUtils.update_number('orders')
+            return HttpResponseRedirect(reverse('pm:add_products_to_order', args=(order.id,)))
+    else:
+        form = OrderForm(initial= {"number": str(CounterUtils.get_next_number('orders'))})
+    return render(request, 'pm/create_order.html', {'form': form,})
+
+
+class OrderDetail(LoginRequiredMixin, DetailView):
+    model = Order
+    template_name = 'pm/order_detail.html'
+
+
+@login_required
+def add_products_to_order(request, orderid):
+    order = get_object_or_404(Order, pk=orderid)
+    if request.method == 'POST':
+        form = ProductByOrderForm(request.POST)
+        if "done" in request.POST:
+            OrderUtils.create_sub_orders(order_id=order.id)
+            return HttpResponseRedirect(reverse('pm:order_detail', args=(order.id,)))
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.order = order
+            product.save()
+            return HttpResponseRedirect(reverse('pm:add_products_to_order', args=(order.id,)))
+    else:
+        form = ProductByOrderForm()
+    return render(request, 'pm/add_products_to_order.html', {'form': form, 'order': order})
+
 
 @login_required
 def products(request):
@@ -24,7 +70,7 @@ def products(request):
 
 
 @login_required
-def create_product(request):
+def add_product(request):
     if request.method == 'POST':
         if "cancel" in request.POST:
             return HttpResponseRedirect(reverse('pm:products'))
@@ -32,7 +78,9 @@ def create_product(request):
         if form.is_valid():
             product = form.save(commit=False)
             form.save()
-            return HttpResponseRedirect(reverse('pm:add_components', args=(product.id,)))
+            if product.final:
+                return HttpResponseRedirect(reverse('pm:add_components', args=(product.id,)))
+            return HttpResponseRedirect(reverse('pm:products'))
     else:
         form = ProductForm()
     return render(request, 'pm/create_product.html', {'form': form})
@@ -40,10 +88,11 @@ def create_product(request):
 @login_required
 def add_components(request, productid):
     product = get_object_or_404(Product, pk=productid)
-    components_list = None
     if request.method == 'POST':
         form = QuantityForm(request.POST)
         if "done" in request.POST:
+            if product.final == True:
+                ProductUtils.create_intermediate_products(product.id)
             return HttpResponseRedirect(reverse('pm:product_detail', args=(product.id,)))
         if form.is_valid():
             component = form.save(commit=False)
@@ -62,10 +111,6 @@ class ModifyProduct(UpdateView):
     model = Product
     fields = ['ref_code', 'name', 'color', 'size', 'components']
     template_name = 'pm/modify_product.html'
-
-@login_required
-def product_detail(request, product_id):
-    return HttpResponse("form to view and modify.")
 
 @login_required
 def inventory(request):

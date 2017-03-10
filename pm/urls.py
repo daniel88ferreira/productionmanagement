@@ -9,8 +9,12 @@ urlpatterns = [
     url(r'^login/$', auth_views.login , {'template_name': 'pm/login.html'}, name='login'),
     url(r'^logout/$', auth_views.logout, {'next_page': 'pm:index'}, name='logout'),
     url(r'^products/$', views.products, name='products'),
-    url(r'^products/add_product/$', views.create_product, name='add_product'),
+    url(r'^products/add_product/$', views.add_product, name='add_product'),
     url(r'^products/(?P<productid>[0-9]+)/add_components/$', views.add_components, name='add_components'),
     url(r'^products/(?P<pk>[0-9]+)/details/$', views.ProductDetail.as_view(), name='product_detail'),
     url(r'^products/(?P<pk>[0-9]+)/edit/$', views.ModifyProduct.as_view(), name='modify_product'),
+    url(r'^orders/$', views.orders, name='orders'),
+    url(r'^orders/create_order/$', views.create_order, name='create_order'),
+    url(r'^orders/(?P<orderid>[0-9]+)/add_product_to_order/$', views.add_products_to_order, name='add_products_to_order'),
+    url(r'^orders/(?P<pk>[0-9]+)/details/$', views.OrderDetail.as_view(), name='order_detail'),
 ]

@@ -22,13 +22,13 @@
             </tr>
             </thead>
             <tbody>
-            {% for quantity in product.get_quantity_list %}
+            {% for component in object.get_components %}
                 <tr>
-                    <td>{{ quantity.component.ref_code }}</td>
-                    <td>{{ quantity.component.name }}</td>
-                    <td>{{ quantity.component.color }}</td>
-                    <td>{{ quantity.component.size }}</td>
-                    <td>{{ quantity.quantity }}</td>
+                    <td>{{ component.component.ref_code }}</td>
+                    <td>{{ component.component.name }}</td>
+                    <td>{{ component.component.color }}</td>
+                    <td>{{ component.component.size }}</td>
+                    <td>{{ component.quantity }}</td>
                 </tr>
             {% endfor %}
         </tbody>

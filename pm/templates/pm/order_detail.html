@@ -1,0 +1,70 @@
+{% extends 'pm/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}Detalhe Ordem de Produção: {{ object.number }}{% endblock %}
+
+{% block content %}
+    <p>
+        <a class="btn btn-primary" href="{% url 'pm:modify_product' object.id %}">Modify (WIP) </a>
+        <a class="btn btn-default" href="{% url 'pm:orders' %}">Feito</a>
+    </p>
+    <h3 class="h3"> Ordem de Produção: {{ object.description.upper }} </h3>
+    <h5 class="h5">ref: {{ object.number }}</h5>
+    <br>
+
+    <!-- Table with Products -->
+    <table class="table table-striped table-hover ">
+        <thead>
+        <tr>
+            <th>Referência</th>
+            <th>Descrição</th>
+            <th>Cor</th>
+            <th>Medida</th>
+            <th>Quantidade</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in order.get_products %}
+            <tr>
+                <td>{{ item.product.ref_code }}</td>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.product.color }}</td>
+                <td>{{ item.product.size }}</td>
+                <td>{{ item.quantity }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Sub Orders Tables -->
+    {% for suborder in object.get_suborders %}
+        <br>
+        <br>
+        <h3 class="h3"> Folha de {{ suborder.get_type_name }} </h3>
+        <h5 class="h5">ref: {{ suborder.number }}</h5>
+        <table class="table table-striped table-hover ">
+                <thead>
+                <tr>
+                    <th>Referência</th>
+                    <th>Descrição</th>
+                    <th>Cor</th>
+                    <th>Medida</th>
+                    <th>Quantidade</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in suborder.get_products %}
+                    <tr>
+                        <td>{{ item.product.ref_code }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.product.color }}</td>
+                        <td>{{ item.product.size }}</td>
+                        <td>{{ item.quantity }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+{% endblock %}
