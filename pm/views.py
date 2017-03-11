@@ -14,7 +14,7 @@ def index(request):
 
 @login_required
 def orders(request):
-    all_orders_list = Order.objects.filter(type=Order.TYPE_BS).order_by('-date')
+    all_orders_list = Order.objects.filter(target=ProductionStages.final().code).order_by('-date')
     context = {
         'all_orders_list' : all_orders_list,
     }

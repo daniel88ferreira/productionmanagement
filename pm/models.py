@@ -30,7 +30,6 @@ class ProductionStages(models.Model):
         return ProductionStages.objects.all().order_by('id')
 
 
-
 class Product(models.Model):
     STAGES = ProductionStages.get_stages_choices()
 
@@ -107,7 +106,10 @@ class Order(models.Model):
         return ProductByOrder.objects.filter(order=self)
 
     def get_suborders_all(self):
-        return self._get_suborders(self)
+        return sorted(self._get_suborders(self), key=self._sort_orders)
+
+    def _sort_orders(self, order):
+        return ProductionStages.objects.get(code=order.target).id
 
     def _get_suborders(self, order):
         suborders = order.suborders

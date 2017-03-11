@@ -5,14 +5,15 @@
 {% block title %}Detalhe Ordem de Produção: {{ object.number }}{% endblock %}
 
 {% block content %}
-    <p>
-        <a class="btn btn-primary" href="{% url 'pm:modify_product' object.id %}">Modify (WIP) </a>
-        <a class="btn btn-default" href="{% url 'pm:orders' %}">Feito</a>
-    </p>
     <h3 class="h3"> Ordem de Produção: {{ object.description.upper }} </h3>
     <h5 class="h5">ref: {{ object.number }}</h5>
     <br>
 
+        <p>
+        <a class="btn btn-primary" href="{% url 'pm:modify_product' object.id %}">Modify (WIP) </a>
+        <a class="btn btn-default" href="{% url 'pm:orders' %}">Feito</a>
+        </p>
+    <br>
     <!-- Table with Products -->
     <table class="table table-striped table-hover ">
         <thead>

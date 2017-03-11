@@ -62,13 +62,38 @@ class OrderMethodsTests(TestCase):
         self.assertEqual(products[1].product.name, "MARIA")
         self.assertEqual(products[1].quantity, 2)
 
-    def test_get_suborders_all_should_return_orders_created_for_other_stages(self):
+    def test_get_suborders_all_should_return_orders_created_for_other_stages_ordered_by_stage(self):
+
+        #### SET UP ####
         product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
         product.save()
-        order = Order.objects.create(number=1)
-        order.add_product(product=product, quantity=2)
+
+        sub_sub_sub_order = Order.objects.create(number=4, target='CP')
+        sub_sub_sub_order.add_product(product=product, quantity=1000)
+        sub_sub_sub_order.save()
+
+        sub_sub_order = Order.objects.create(number=3, target='PT')
+        sub_sub_order.add_product(product=product, quantity=100)
+        sub_sub_order.suborders.add(sub_sub_sub_order)
+        sub_sub_order.save()
+
+        sub_order = Order.objects.create(number=2, target='MT')
+        sub_order.add_product(product=product, quantity=10)
+        sub_order.suborders.add(sub_sub_order)
+        sub_order.save()
+
+        order = Order.objects.create(number=1, target='BS')
+        order.add_product(product=product, quantity=1)
+        order.suborders.add(sub_order)
         order.save()
-        print('NOT DONE!')
+
+        #### ALL SET ####
+
+        order = Order.objects.get(number=1)
+        for idx,sub_order in enumerate(order.get_suborders_all()):
+            sub_order_number = idx + 2 # expected_numbers = [2,3,4]
+            self.assertEqual(sub_order.number, str(sub_order_number))
+
 
     def test_add_suborder(self):
         product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
@@ -84,8 +109,9 @@ class OrderMethodsTests(TestCase):
         order.suborders.add(sub_order)
         order.save()
 
-        print(order.suborders.all())
-        print('NOT DONE!')
+        suborders = order.suborders.all()
+        self.assertEqual(len(suborders), 1)
+        self.assertEqual(suborders[0].number, str(2))
 
 
 class ProductUtilsTests(TestCase):

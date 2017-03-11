@@ -52,13 +52,13 @@ class OrderUtils:
         order = Order.objects.get(id=order_id)
 
 
-        sub_order_type = Product.STAGE_1
+        sub_order_target = ProductionStages.final().code
 
         sub_order = Order.objects.create(date=order.date,
-                                         number=str(order.number) + '.' + str(sub_order_type),
+                                         number=str(order.number) + '.' + str(sub_order_target),
                                          description='a sub order',
                                          status=0,
-                                         type=sub_order_type
+                                         target=sub_order_target
                                          )
         order.suborders.add(sub_order)
         order.save()
@@ -71,11 +71,12 @@ class OrderUtils:
         po.save()
 
 
+        sub_sub_order_target = ProductionStages.objects.get(id=(ProductionStages.final().id+1)).code
         sub_sub_order = Order.objects.create(date=sub_order.date,
-                                         number=str(sub_order.number) + '.' + Order.TYPE_PT,
+                                         number=str(sub_order.number) + '.' + str(sub_sub_order_target),
                                          description='a sub sub order',
                                          status=0,
-                                         type=Product.STAGE_2
+                                         target=sub_sub_order_target
                                             )
 
         sub_order.suborders.add(sub_sub_order)
