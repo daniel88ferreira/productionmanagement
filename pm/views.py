@@ -91,8 +91,7 @@ def add_components(request, productid):
     if request.method == 'POST':
         form = QuantityForm(request.POST)
         if "done" in request.POST:
-            if product.final == True:
-                ProductUtils.create_intermediate_products(product.id)
+            ProductUtils.create_intermediate_products(product.id)
             return HttpResponseRedirect(reverse('pm:product_detail', args=(product.id,)))
         if form.is_valid():
             component = form.save(commit=False)

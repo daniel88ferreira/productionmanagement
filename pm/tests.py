@@ -113,6 +113,29 @@ class OrderMethodsTests(TestCase):
         self.assertEqual(len(suborders), 1)
         self.assertEqual(suborders[0].number, str(2))
 
+    def test_target_code_should_return_str_target_code(self):
+        product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
+        product.save()
+        order = Order.objects.create(number=1, target='PT')
+        order.add_product(product=product, quantity=100)
+        order.save()
+
+        #--- All Set ---#
+        order = Order.objects.get(number=1)
+        self.assertEqual(order.target_code(), 'PT')
+
+    def test_target_description_should_return_str_target_description(self):
+        product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
+        product.save()
+        order = Order.objects.create(number=1, target='PT')
+        order.add_product(product=product, quantity=100)
+        order.save()
+
+        # --- All Set ---#
+        order = Order.objects.get(number=1)
+        self.assertEqual(order.target_description(), 'Pintura')
+
+
 
 class ProductUtilsTests(TestCase):
     fixtures = ['production_stages.json']
@@ -144,6 +167,7 @@ class ProductUtilsTests(TestCase):
 
         self.assertIs(len(sub_component.get_components()),0)
 
+
     def test_create_intermediate_products_should_replace_affected_characteristic_with_default_value(self):
         component = Product.objects.create(ref_code=1, name='ilharga', color='Branco', size='200x300',
                                            stages=['PT', 'CP'])
@@ -173,6 +197,7 @@ class ProductUtilsTests(TestCase):
     def test_create_intermediate_products_should_not_create_duplicate_objects(self):
         component = Product.objects.create(ref_code=1, name='ilharga', color='Branco', size='200x300', stages=['PT', 'CP'])
         component.save()
+
         product = Product.objects.create(ref_code=2, name='REGINA', size='80', stages=['MT'])
         product.add_component(component, 2)
         product.save()
@@ -198,16 +223,33 @@ class ProductUtilsTests(TestCase):
 class OrderUtilsTests(TestCase):
     fixtures = ['production_stages.json']
 
-    def test_create_sub_orders_should_create_orders_for_all_stages_if_there_is_no_stock(self):
+    def test_create_sub_orders_should_create_orders_for_all_stages_if_no_stock(self):
+
+        #--- Set up ---#
         component = Product.objects.create(ref_code=1, name='ilharga', color='Branco', size='200x300',
                                            stages=['PT', 'CP'])
         component.save()
         product = Product.objects.create(ref_code=2, name='REGINA', size='80', stages=['MT'])
         product.add_component(component, 2)
         product.save()
+        ProductUtils.create_intermediate_products(product_id=product.id)
+        order = Order.objects.create(number=1, description='testing order')
+        order.add_product(product=product, quantity=10)
+        order.save()
 
-        print('NOT DONE!')
-        self.assertEqual(1, 1)
+        OrderUtils.create_sub_orders(order_id=order.id)
+
+        # ---- All Set ---#
+        order = Order.objects.get(number=1)
+        self.assertEqual(order.target, 'BS')
+
+        suborders = order.get_suborders_all()
+        print(suborders)
+        self.assertEqual(len(suborders), 3)
+        self.assertEqual(suborders[0].target, 'MT')
+        self.assertEqual(suborders[1].target, 'PT')
+        self.assertEqual(suborders[2].target, 'CP')
+
 
 
 class ProductionStagesTests(TestCase):

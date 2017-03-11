@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.forms import ModelForm
 from django.db import models
 
+
 class ProductionStages(models.Model):
     code = models.CharField(max_length=2, unique=True)
     description = models.CharField(max_length=200)
@@ -22,7 +23,7 @@ class ProductionStages(models.Model):
     def get_stages_choices():
         stages = ()
         for stage in ProductionStages.objects.all():
-           stages += ((str(stage.code), str(stage.description)),)
+            stages += ((str(stage.code), str(stage.description)),)
         return stages
 
     @staticmethod
@@ -94,6 +95,7 @@ class Order(models.Model):
     status = models.IntegerField(default=0)
     suborders = models.ManyToManyField('self', symmetrical=False, blank=True)
     target = models.CharField(max_length=2, choices=TARGETS, default=ProductionStages.final().code)
+    #target = models.ForeignKey(ProductionStages, on_delete=models.CASCADE())
 
     def __str__(self):
         return '(' + str(self.number) + ')' + ' ' + self.description
@@ -108,7 +110,8 @@ class Order(models.Model):
     def get_suborders_all(self):
         return sorted(self._get_suborders(self), key=self._sort_orders)
 
-    def _sort_orders(self, order):
+    @staticmethod
+    def _sort_orders(order):
         return ProductionStages.objects.get(code=order.target).id
 
     def _get_suborders(self, order):
@@ -118,13 +121,16 @@ class Order(models.Model):
             suborders_query_set = self._get_suborders(Order.objects.get(id=suborder_id))
             if suborders_query_set:
                 suborders_id_list.extend(list(suborders_query_set.values_list('id', flat=True)))
-        return Order.objects.filter(pk__in = suborders_id_list)
+        return Order.objects.filter(pk__in=suborders_id_list)
 
     def target_description(self):
-        return ProductionStages.objects.get(description=self.target)
+        return ProductionStages.objects.get(code=self.target).description
 
     def target_code(self):
-        return  ProductionStages.objects.get(description=self.target)
+        return ProductionStages.objects.get(code=self.target).code
+
+    def target_id(self):
+        return ProductionStages.objects.get(code=self.target).id
 
 
 class ProductByOrder(models.Model):

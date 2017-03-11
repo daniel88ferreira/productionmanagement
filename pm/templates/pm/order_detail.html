@@ -5,7 +5,7 @@
 {% block title %}Detalhe Ordem de Produção: {{ object.number }}{% endblock %}
 
 {% block content %}
-    <h3 class="h3"> Ordem de Produção: {{ object.description.upper }} </h3>
+    <h3 class="h3">Ordem de Produção: {{ object.description.upper }} </h3>
     <h5 class="h5">ref: {{ object.number }}</h5>
     <br>
 
@@ -40,10 +40,10 @@
     </table>
 
     <!-- Sub Orders Tables -->
-    {% for suborder in object.get_suborders %}
+    {% for suborder in object.get_suborders_all %}
         <br>
         <br>
-        <h3 class="h3"> Folha de {{ suborder.get_type_name }} </h3>
+        <h3 class="h3"> Folha de {{ suborder.target_description }} </h3>
         <h5 class="h5">ref: {{ suborder.number }}</h5>
         <table class="table table-striped table-hover ">
                 <thead>

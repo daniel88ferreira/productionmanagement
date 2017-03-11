@@ -51,43 +51,23 @@ class OrderUtils:
     def create_sub_orders(order_id):
         order = Order.objects.get(id=order_id)
 
+        entries = order.get_products()
+        products_to_produce = []
+        for entry in entries:
+            quantity_to_produce =  entry.quantity - entry.product.stock
+            if quantity_to_produce > 0:
+                products_to_produce.append([entry.product,quantity_to_produce])
 
-        sub_order_target = ProductionStages.final().code
+        if len(products_to_produce) > 0:
+            target = ProductionStages.objects.get(id=order.target_id() + 1)
+            sub_order = Order.objects.create(number=str(order.number) + '.' + str(target.code),
+                                         date=order.date,
+                                         description=str(order.description) + '@' + str(target.description),
+                                         target=target.code)
+            for element in products_to_produce:
+                sub_order.add_product(product=element[0], quantity=element[1])
+            order.suborders.add(sub_order)
 
-        sub_order = Order.objects.create(date=order.date,
-                                         number=str(order.number) + '.' + str(sub_order_target),
-                                         description='a sub order',
-                                         status=0,
-                                         target=sub_order_target
-                                         )
-        order.suborders.add(sub_order)
-        order.save()
-
-        p1 = Product.objects.get(id=1)
-        po = ProductByOrder.objects.create(order=sub_order,
-                                           product = p1,
-                                           quantity = 10,
-                                           )
-        po.save()
-
-
-        sub_sub_order_target = ProductionStages.objects.get(id=(ProductionStages.final().id+1)).code
-        sub_sub_order = Order.objects.create(date=sub_order.date,
-                                         number=str(sub_order.number) + '.' + str(sub_sub_order_target),
-                                         description='a sub sub order',
-                                         status=0,
-                                         target=sub_sub_order_target
-                                            )
-
-        sub_order.suborders.add(sub_sub_order)
-        sub_sub_order.save()
-
-        p4 = Product.objects.get(id=2)
-        po2 = ProductByOrder.objects.create(order=sub_sub_order,
-                                           product=p4,
-                                           quantity=100,
-                                           )
-        po2.save()
 
 
     @staticmethod
