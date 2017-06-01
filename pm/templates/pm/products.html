@@ -8,10 +8,11 @@
     <h2 class="h3">Produtos</h2>
     <br>
     <p>
-        <a class="btn btn-primary" href="{% url 'pm:add_product' %}">Adicionar Produto</a>
+        <a class="btn btn-primary" href="{% url 'pm:create_product' %}">Criar Produto</a>
+        <a class="btn btn-default" href="{% url 'pm:create_component' %}">Criar Produto Intermédio</a>
     </p>
     <br>
-    <table class="table table-striped table-hover ">
+    <table class="table table-striped table-hover">
             <thead>
             <tr>
                 <th>Referência</th>

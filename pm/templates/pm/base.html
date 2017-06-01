@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 
 <!DOCTYPE html>
 <html>
@@ -6,7 +6,8 @@
     <meta charset="utf-8">
     <title>{% block title %}Welcome{% endblock %}</title>
     <link rel="stylesheet" type="text/css" href="{% static 'pm/bootstrap/css/bootstrap.min.css' %}">
-    <script type="text/javascript" src="{% static 'pm/jquery-3.1.1.min.js' %}"> </script>
+    <script type="text/javascript" src="{% static 'pm/jquery/jquery-3.2.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'pm/bootstrap/js/bootstrap.min.js' %}"></script>
 </head>
 <body>
 <nav class="navbar navbar-default navbar-fixed-top" id="navbar-main">
@@ -31,6 +32,7 @@
     </div>
   </div>
 </nav>
+
 <br>
 <div class="container">
   <hr>
@@ -39,5 +41,7 @@
     {% endblock %}
   <hr>
 </div>
+{% block javascript %}
+{% endblock %}
 </body>
 </html>

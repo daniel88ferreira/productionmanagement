@@ -10,7 +10,7 @@
     <br>
 
         <p>
-        <a class="btn btn-primary" href="{% url 'pm:modify_product' object.id %}">Modify (WIP) </a>
+        <a class="btn btn-primary" href="{% url 'pm:modify_product' object.id %}">Modify (WIP)</a>
         <a class="btn btn-default" href="{% url 'pm:orders' %}">Feito</a>
         </p>
     <br>
@@ -27,20 +27,20 @@
         </tr>
         </thead>
         <tbody>
-        {% for item in order.get_products %}
+        {% for entry in order.get_entries %}
             <tr>
-                <td>{{ item.product.ref_code }}</td>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.product.color }}</td>
-                <td>{{ item.product.size }}</td>
-                <td>{{ item.quantity }}</td>
+                <td>{{ entry.product.ref_code }}</td>
+                <td>{{ entry.product.name }}</td>
+                <td>{{ entry.product.color }}</td>
+                <td>{{ entry.product.size }}</td>
+                <td>{{ entry.quantity }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
     <!-- Sub Orders Tables -->
-    {% for suborder in object.get_suborders_all %}
+    {% for suborder in order.get_suborders_all %}
         <br>
         <br>
         <h3 class="h3"> Folha de {{ suborder.target_description }} </h3>
@@ -56,7 +56,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for item in suborder.get_products %}
+                {% for item in suborder.get_entries %}
                     <tr>
                         <td>{{ item.product.ref_code }}</td>
                         <td>{{ item.product.name }}</td>

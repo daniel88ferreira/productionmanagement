@@ -2,11 +2,11 @@
 
 {% load crispy_forms_tags %}
 
-{% block title %}Criar Produto{% endblock %}
+{% block title %}Criar Produto Intermédio{% endblock %}
 
 {% block content %}
-    <h2 class="h3">Criar Produto</h2>
-    <form action="{% url 'pm:create_product' %}" method="post">
+    <h2 class="h3">Criar Produto Intermédio</h2>
+    <form action="{% url 'pm:create_component' %}" method="post">
         {% csrf_token %}
         {{ form|crispy}}
         <input class="btn btn-primary" type="submit" value="Adicionar" />

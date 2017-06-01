@@ -3,15 +3,6 @@
     "model": "pm.productionstages",
     "pk": 1,
     "fields": {
-      "code": "BS",
-      "description": "Base",
-      "affected_characteristic": ""
-    }
-  },
-  {
-    "model": "pm.productionstages",
-    "pk": 2,
-    "fields": {
       "code": "MT",
       "description": "Montagem",
       "affected_characteristic": ""
@@ -19,17 +10,16 @@
   },
   {
     "model": "pm.productionstages",
-    "pk": 3,
+    "pk": 2,
     "fields": {
       "code": "PT",
-      "description":
-      "Pintura",
+      "description": "Pintura",
       "affected_characteristic": "color"
     }
   },
   {
     "model": "pm.productionstages",
-    "pk": 4,
+    "pk": 3,
     "fields": {
       "code": "CP",
       "description": "Carpintaria",
