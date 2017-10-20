@@ -66,12 +66,12 @@ def create_test_orders():
     mv_clara.save()
 
     order_1 = Order.objects.create(number=1, description='testing order 1')
-    order_1.add_new_entry(mv_regina, 20)
+    order_1.add_entry(mv_regina, 20)
     order_1.save()
     OrderUtils.create_sub_orders(order_id=order_1.id)
 
     order_2 = Order.objects.create(number=2, description='testing order 2')
-    order_2.add_new_entry(mv_clara, 20)
+    order_2.add_entry(mv_clara, 20)
     order_2.save()
     OrderUtils.create_sub_orders(order_id=order_2.id)
 
@@ -170,11 +170,24 @@ class ProductUtilsTests(TestCase):
 class OrderUtilsTests(TestCase):
     fixtures = ['pm/production_stages.json']
 
+    def test_delete_execution_order_should_return_deleted_order_object_with_id(self):
+        order = OrderUtils.get_exec_order()
+        order_id = order.id
+        deleted_order = OrderUtils.delete_execution_order()
+        self.assertEqual(order.description, deleted_order.description)
+        self.assertEqual(order_id, deleted_order.id)
+
+    def test_delete_execution_order_should_decrement_counter(self):
+        OrderUtils.get_exec_order()
+        counter_value = CounterUtils.current_number('exec_orders')
+        OrderUtils.delete_execution_order()
+        self.assertEqual(CounterUtils.current_number('exec_orders'), counter_value - 1)
+
     def test_get_exec_order_should_create_an_order_if_there_is_no_exec_order(self):
         order = OrderUtils.get_exec_order()
         self.assertEqual(order.exec_order, True)
         self.assertEqual(order.target, '')
-        self.assertEqual(str(order.exec_order_reference), 'pm.Order.None')
+        self.assertEqual(order.exec_order_reference, None)
 
     def test_get_exec_order_should_not_create_an_order_if_there_is_one_opened(self):
         order = OrderUtils.get_exec_order()
@@ -187,6 +200,31 @@ class OrderUtilsTests(TestCase):
         order.save()
         order_2 = OrderUtils.get_exec_order()
         self.assertNotEqual(str(order), str(order_2))
+
+    def test_create_sub_orders_with_a_main_product_and_intermediate_product(self):
+        ilharga = Product.objects.create(
+            ref_code=1, name='ilharga', color='Branco', size='200x300', stages=['PT', 'CP']
+        )
+        ilharga.save()
+
+        ProductUtils.create_intermediate_products(product=ilharga)
+
+        mv_regina = Product.objects.create(ref_code=2, name='REGINA', color='Branco', size='80', stages=['MT'])
+        mv_regina.add_component(ilharga, 1)
+        mv_regina.save()
+
+        order = Order.objects.create(number=1, description='testing order')
+        order.add_entry(product=mv_regina, quantity=1)
+        order.add_entry(product=ilharga, quantity=1)
+        order.save()
+
+        OrderUtils.create_sub_orders(order_id=order.id)
+
+        sub_orders = order.get_suborders_all()
+        self.assertEqual(len(sub_orders[0].get_entries()), 1)
+        self.assertEqual(len(sub_orders[1].get_entries()), 1)
+        self.assertEqual(len(sub_orders[2].get_entries()), 1)
+
 
     def test_create_sub_orders_when_stock_for_components_exist(self):
         ilharga = Product.objects.create(
@@ -205,7 +243,7 @@ class OrderUtilsTests(TestCase):
         ilharga.save()
 
         order = Order.objects.create(number=1, description='testing order')
-        order.add_new_entry(product=mv_regina, quantity=10)
+        order.add_entry(product=mv_regina, quantity=10)
         order.save()
 
         OrderUtils.create_sub_orders(order_id=order.id)
@@ -237,7 +275,7 @@ class OrderUtilsTests(TestCase):
         ilharga.save()
 
         order = Order.objects.create(number=1, description='testing order')
-        order.add_new_entry(product=mv_regina, quantity=10)
+        order.add_entry(product=mv_regina, quantity=10)
         order.save()
 
         OrderUtils.create_sub_orders(order_id=order.id)
@@ -288,7 +326,7 @@ class OrderUtilsTests(TestCase):
         ilharga_CP.save()
 
         order = Order.objects.create(number=1, description='testing order')
-        order.add_new_entry(product=mv_regina, quantity=10)
+        order.add_entry(product=mv_regina, quantity=10)
         order.save()
 
         OrderUtils.create_sub_orders(order_id=order.id)
@@ -338,7 +376,7 @@ class OrderUtilsTests(TestCase):
         mv_regina.save()
 
         order = Order.objects.create(number=1, description='testing order')
-        order.add_new_entry(product=mv_regina, quantity=10)
+        order.add_entry(product=mv_regina, quantity=10)
         order.save()
 
         OrderUtils.create_sub_orders(order_id=order.id)

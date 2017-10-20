@@ -54,14 +54,27 @@ def create_test_orders():
     mv_clara.save()
 
     order_1 = Order.objects.create(number=1, description='testing order 1')
-    order_1.add_new_entry(mv_regina, 20)
+    order_1.add_entry(mv_regina, 20)
     order_1.save()
     OrderUtils.create_sub_orders(order_id=order_1.id)
 
     order_2 = Order.objects.create(number=2, description='testing order 2')
-    order_2.add_new_entry(mv_clara, 20)
+    order_2.add_entry(mv_clara, 20)
     order_2.save()
     OrderUtils.create_sub_orders(order_id=order_2.id)
+
+def compare_order_entries(first_order_entries, second_order_entries):
+    result = (len(first_order_entries) == len(second_order_entries))
+    if result == True:
+        i = 0
+        for entry_1 in first_order_entries:
+            entry_2 = second_order_entries[i]
+            result = (entry_1.product == entry_2.product) and (entry_1.quantity == entry_2.quantity)
+            if result == False:
+                print(result)
+                break
+            i+=1
+    return result
 
 
 
@@ -204,6 +217,68 @@ class ProductMethodsTests(TestCase):
 class OrderMethodsTests(TestCase):
     fixtures = ['pm/production_stages.json']
 
+    def test_remove_order(self):
+        create_test_orders()
+        exec_order = Order.objects.create(
+            number='x' + str(CounterUtils.next_number('exec_orders')),
+            description="Execution order",
+            exec_order=True,
+        )
+        exec_order.save()
+        order_1 = Order.objects.get(number='1')
+        exec_order.add_order(order_1)
+
+        exec_order_entries_before = list(exec_order.get_entries())
+        order_2 = Order.objects.get(number='2')
+        exec_order.add_order(order_2)
+
+        self.assertNotEqual(order_2.exec_order_reference, None)
+        self.assertFalse(compare_order_entries(exec_order.get_entries(), exec_order_entries_before))
+
+        exec_order.remove_order(order_2)
+        self.assertEqual(order_2.exec_order_reference, None)
+        self.assertTrue(compare_order_entries(exec_order.get_entries(), exec_order_entries_before),
+                        "Entries are not the same after removing order!")
+        orders = [order_2] + order_2.get_suborders_all()
+        for order in orders:
+            self.assertEqual(order.exec_order_reference, None)
+
+    def test_get_orders_with_two_orders(self):
+        create_test_orders()
+        exec_order = Order.objects.create(
+            number='x' + str(CounterUtils.next_number('exec_orders')),
+            description="Execution order",
+            exec_order=True,
+        )
+        exec_order.save()
+        order_1 = Order.objects.get(number='1')
+        order_2 = Order.objects.get(number='2')
+
+        exec_order.add_order(order_1)
+        exec_order.add_order(order_2)
+
+        orders = exec_order.get_orders()
+        print_orders(exec_order)
+
+        self.assertEqual(order_1.number, orders[0].number)
+        self.assertEqual(order_2.number, orders[1].number)
+
+    def test_add_order_should_update_reference_for_all_suborders(self):
+        create_test_orders()
+        exec_order = Order.objects.create(
+            number='x' + str(CounterUtils.next_number('exec_orders')),
+            description="Execution order",
+            exec_order=True,
+        )
+        exec_order.save()
+        order = Order.objects.get(number='1')
+        exec_order.add_order(order)
+
+        suborders = order.get_suborders_all()
+        for suborder in suborders:
+            self.assertNotEqual(suborder.exec_order_reference, None)
+            self.assertEqual(suborder.exec_order_reference, exec_order)
+
     def test_add_order_with_regular_and_suborder(self):
         create_test_orders()
         exec_order = Order.objects.create(
@@ -219,9 +294,9 @@ class OrderMethodsTests(TestCase):
         exec_order.add_order(order)
         exec_order.add_order(suborder)
 
-        print_order(exec_order)
         entries = exec_order.get_entries()
         self.assertEqual(len(entries), 4)
+        print_order(exec_order)
 
         self.assertEqual(entries[0].product.name, 'Clara')
         self.assertEqual(entries[0].quantity, 20)
@@ -310,12 +385,24 @@ class OrderMethodsTests(TestCase):
         order_to_add = Order.objects.filter(target='')[0]
         self.assertRaises(ValueError, order.add_order, order=order_to_add)
 
-
-    def test_add_new_entry(self):
+    def test_add_entry_should_sum_quantity_if_exists(self):
         product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
         product.save()
         order = Order.objects.create(number=1)
-        order.add_new_entry(product=product, quantity=2)
+        order.add_entry(product=product, quantity=2)
+        order.add_entry(product=product, quantity=8)
+        order.save()
+
+        entries = order.get_entries()
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
+        self.assertEqual(entry.quantity, 10)
+
+    def test_add_entry(self):
+        product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
+        product.save()
+        order = Order.objects.create(number=1)
+        order.add_entry(product=product, quantity=2)
         order.save()
 
         order = Order.objects.get(number=1)
@@ -329,8 +416,8 @@ class OrderMethodsTests(TestCase):
         product_maria = Product.objects.create(ref_code=2, name='MARIA', size='60', stages=['MT'])
         product_maria.save()
         order = Order.objects.create(number=1)
-        order.add_new_entry(product=product_regina, quantity=1)
-        order.add_new_entry(product=product_maria, quantity=2)
+        order.add_entry(product=product_regina, quantity=1)
+        order.add_entry(product=product_maria, quantity=2)
         order.save()
 
         order = Order.objects.get(number=1)
@@ -356,21 +443,21 @@ class OrderMethodsTests(TestCase):
         product.save()
 
         sub_sub_sub_order = Order.objects.create(number=4, target='CP')
-        sub_sub_sub_order.add_new_entry(product=product, quantity=1000)
+        sub_sub_sub_order.add_entry(product=product, quantity=1000)
         sub_sub_sub_order.save()
 
         sub_sub_order = Order.objects.create(number=3, target='PT')
-        sub_sub_order.add_new_entry(product=product, quantity=100)
+        sub_sub_order.add_entry(product=product, quantity=100)
         sub_sub_order.suborders.add(sub_sub_sub_order)
         sub_sub_order.save()
 
         sub_order = Order.objects.create(number=2, target='MT')
-        sub_order.add_new_entry(product=product, quantity=10)
+        sub_order.add_entry(product=product, quantity=10)
         sub_order.suborders.add(sub_sub_order)
         sub_order.save()
 
         order = Order.objects.create(number=1, target='BS')
-        order.add_new_entry(product=product, quantity=1)
+        order.add_entry(product=product, quantity=1)
         order.suborders.add(sub_order)
         order.save()
 
@@ -386,11 +473,11 @@ class OrderMethodsTests(TestCase):
         product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
         product.save()
         order = Order.objects.create(number=1)
-        order.add_new_entry(product=product, quantity=2)
+        order.add_entry(product=product, quantity=2)
         order.save()
 
         sub_order = Order.objects.create(number=2)
-        sub_order.add_new_entry(product=product, quantity=10)
+        sub_order.add_entry(product=product, quantity=10)
         sub_order.save()
 
         order.suborders.add(sub_order)
@@ -404,7 +491,7 @@ class OrderMethodsTests(TestCase):
         product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
         product.save()
         order = Order.objects.create(number=1, target='PT')
-        order.add_new_entry(product=product, quantity=100)
+        order.add_entry(product=product, quantity=100)
         order.save()
 
         #--- All Set ---#
@@ -415,7 +502,7 @@ class OrderMethodsTests(TestCase):
         product = Product.objects.create(ref_code=1, name='REGINA', size='80', stages=['MT'])
         product.save()
         order = Order.objects.create(number=1, target='PT')
-        order.add_new_entry(product=product, quantity=100)
+        order.add_entry(product=product, quantity=100)
         order.save()
 
         # --- All Set ---#

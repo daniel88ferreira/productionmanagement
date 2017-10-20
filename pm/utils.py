@@ -80,8 +80,36 @@ class OrderUtils:
     @staticmethod
     def get_exec_order():
         try:
-            exec_order = Order.objects.get(exec_order=True, status=0)
+            exec_order = OrderUtils.create_exec_order()
+        except ValueError:
+            exec_order = OrderUtils.exec_order_exists()
+        return exec_order
+
+    @staticmethod
+    def delete_execution_order():
+        try:
+            order_to_delete = Order.objects.get(exec_order=True, status=0)
+            order_to_delete_id = order_to_delete.id
+            order_to_delete.delete()
+            order_to_delete.id = order_to_delete_id
+            CounterUtils.decrement_number('exec_orders')
         except ObjectDoesNotExist:
+            order_to_delete = None
+        return order_to_delete
+
+    @staticmethod
+    def exec_order_exists():
+        try:
+            exec_order = Order.objects.get(exec_order=True, status=0)
+            return exec_order
+        except ObjectDoesNotExist:
+            return None
+
+    @staticmethod
+    def create_exec_order():
+        if OrderUtils.exec_order_exists():
+            raise ValueError("An execution order already exists in DB")
+        else:
             exec_order = Order.objects.create(
                 number='x' + str(CounterUtils.next_number('exec_orders')),
                 description="Execution order",
@@ -89,7 +117,7 @@ class OrderUtils:
             )
             exec_order.save()
             CounterUtils.update_number('exec_orders')
-        return exec_order
+            return exec_order
 
     @staticmethod
     def create_sub_orders(order_id):
@@ -102,7 +130,6 @@ class OrderUtils:
                 prod_elements.append(pe)
                 prod_elements.extend(OrderUtils._create_all_productionElements(production_element=pe))
         OrderUtils._create_suborders(order=order, production_elements=prod_elements)
-
 
     @staticmethod
     def _create_suborders(order, production_elements):
@@ -121,7 +148,7 @@ class OrderUtils:
                     target=stage.code
                 )
                 for pe in list_of_production_elements_from_stage:
-                    suborder.add_new_entry(product=pe.product,quantity=pe.quantity)
+                    suborder.add_entry(product=pe.product, quantity=pe.quantity)
                 parent_order.suborders.add(suborder)
                 parent_order.save()
                 parent_order = suborder
@@ -144,6 +171,23 @@ class OrderUtils:
 
 
 class CounterUtils:
+    @staticmethod
+    def decrement_number(name):
+        try:
+            counter = Counters.objects.get(name=name)
+            counter.value -=1
+            counter.save()
+        except ObjectDoesNotExist:
+            return ObjectDoesNotExist
+
+    @staticmethod
+    def current_number(name):
+        try:
+            value = Counters.objects.get(name=name).value
+        except ObjectDoesNotExist:
+            value = None
+        return value
+
     @staticmethod
     def next_number(name):
         try:

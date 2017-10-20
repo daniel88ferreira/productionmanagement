@@ -93,6 +93,7 @@ class Product(models.Model):
                 ordered_stages.append(stage[0])
         return ordered_stages
 
+
     def get_main_stage(self):
         return self.get_stages()[0]
 
@@ -123,29 +124,64 @@ class Order(models.Model):
     suborders = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='order_suborders')
     target = models.CharField(max_length=2, choices=TARGETS, default='')
     #target = models.CharField(max_length=2, choices=TARGETS, default='BS')
-    exec_order_reference = models.ForeignKey('self', blank=True, null=True, related_name='order_exec_order', on_delete=models.CASCADE)
+    exec_order_reference = models.ForeignKey('self', blank=True, null=True, related_name='order_exec_order', on_delete=models.SET_NULL)
     exec_order = models.BooleanField(default=False)
 
     def __str__(self):
-        return '(' + str(self.number) + ')' + ' ' + self.description
+        return str(self.number)+ ':' + str(self.description)
+
+    def get_orders(self):
+        if self.exec_order:
+            return Order.objects.filter(exec_order_reference=self, target='')
+        else:
+            raise ValueError('\"' + str(self) + '\" is not an Execution Order')
 
     def add_order(self, order):
         if self.exec_order:
-            order.exec_order_reference = self
             if order.target != '':
                 orders = [order] + order.get_suborders_all()
             else:
+                order.exec_order_reference = self
+                order.save()
                 orders = order.get_suborders_all()
             for _order in orders:
+                _order.exec_order_reference = self
+                _order.save()
                 for entry in _order.get_entries():
                     self._add_entry_to_exec_order(entry)
+        else:
+            raise ValueError('\"' + str(self) + '\" is not an Execution Order')
+
+    def remove_order(self, order):
+        if self.exec_order:
+            order.save()
+            if order.target != '':
+                orders = [order] + order.get_suborders_all()
+            else:
+                order.exec_order_reference = None
+                order.save()
+                orders = order.get_suborders_all()
+
+            for _order in orders:
+                _order.exec_order_reference = None
+                _order.save()
+                exec_order_entries = self.get_entries()
+                for entry in _order.get_entries():
+                    try:
+                        existing_entry = exec_order_entries.get(product=entry.product)
+                        existing_entry.quantity -= entry.quantity
+                        existing_entry.save()
+                        if existing_entry.quantity == 0:
+                            existing_entry.delete()
+                    except ObjectDoesNotExist:
+                        print("ERROR: Something wrong, entry should exist.")
+                        continue
         else:
             raise ValueError('\"' + str(self) + '\" is not an Execution Order')
 
     def _add_entry_to_exec_order(self, entry):
         try:
             existing_entry = OrderEntry.objects.get(order=self, product__name=str(entry.product.name))
-            #print("Existing: " + str(existing_entry))
             existing_entry.quantity += entry.quantity
             existing_entry.save()
         except ObjectDoesNotExist:
@@ -154,12 +190,17 @@ class Order(models.Model):
     def executing(self):
         return self.status > 0
 
-    def add_new_entry(self, product, quantity):
-        new_entry = OrderEntry.objects.create(order=self, product=product, quantity=quantity)
-        new_entry.save()
+    def add_entry(self, product, quantity):
+        try:
+            existing_entry = OrderEntry.objects.get(order=self, product=product)
+            existing_entry.quantity += quantity
+            existing_entry.save()
+        except ObjectDoesNotExist:
+            new_entry = OrderEntry.objects.create(order=self, product=product, quantity=quantity)
+            new_entry.save()
 
     def get_entries(self):
-        return OrderEntry.objects.filter(order=self)
+        return OrderEntry.objects.filter(order=self).order_by('order__number')
 
     def get_suborders_all(self):
         return sorted(Order.objects.filter(pk__in=self._get_suborders(self)), key=self._sort_orders)

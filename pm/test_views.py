@@ -10,6 +10,9 @@ class ViewsTests(TestCase):
             username='daniel', email='dan@gmail.com', password='ferreira123')
         self.client.post(reverse('pm:login'), {'username': 'daniel', 'password': 'ferreira123'})
 
+    def test_orders_view_cancel_order(self):
+        pass
+
     def test_index_when_no_login(self):
         '''
         When the user is not logged in.
