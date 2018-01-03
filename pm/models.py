@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
 
-from ProductionElement import ProductionElement
 from django.core.exceptions import ObjectDoesNotExist
-from multiselectfield import MultiSelectField
-from django.utils import timezone
 from django.db import models
+from django.utils import timezone
+from multiselectfield import MultiSelectField
 
 
 class ProductionStages(models.Model):

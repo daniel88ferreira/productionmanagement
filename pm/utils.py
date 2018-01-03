@@ -1,6 +1,6 @@
 
 from django.core.exceptions import ObjectDoesNotExist
-from ProductionElement import ProductionElement
+from .ProductionElement import ProductionElement
 from .models import ProductionStages, Product, Order, Counters
 #from .models import  Product, Order, Counters
 

@@ -6,4 +6,3 @@ class ProductionElement:
 
     def __str__(self):
         return "[" + str(self.product.name) + ":" + str(self.quantity) + ":" + str(self.target) + "]"
-
